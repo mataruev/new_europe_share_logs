@@ -1,27 +1,12 @@
+import threading
+
 import streamlit as st
-import pandas as pd
 import ftputil
 import os
 import time
-import zipfile
-import toml
 
+from adrena import AdrenaTrack
 
-# Function to read FTP credentials from the config file
-def read_ftp_credentials():
-    try:
-        config = toml.load("config.toml")
-        return config['data']
-    except FileNotFoundError:
-        st.error("Config file not found.")
-        st.stop()
-
-
-# ftp_credentials = read_ftp_credentials()
-
-# ftp_host = ftp_credentials['FTP_HOST']
-# ftp_user = ftp_credentials['FTP_USER']
-# ftp_pass = ftp_credentials['FTP_PASS']
 
 ftp_host = st.secrets['data']['FTP_HOST']
 ftp_user = st.secrets['data']['FTP_USER']
@@ -30,87 +15,76 @@ ftp_pass = st.secrets['data']['FTP_PASS']
 
 # Function to connect to the FTP server and download files
 def download_files():
-    try:
-        with ftputil.FTPHost(ftp_host, ftp_user, ftp_pass) as host:
-            remote_dir = "/your/remote/directory"
-            local_dir = "downloaded_files"
+    while True:
+        try:
+            with ftputil.FTPHost(ftp_host, ftp_user, ftp_pass) as host:
+                remote_dir = "/your/remote/directory"
+                local_dir = "downloaded_files"
 
-            # host.chdir(remote_dir)
-            list_dir = host.listdir(host.curdir)
-            for name in list_dir:
-                if name.endswith(".jtz"):
-                    if host.download(name, os.path.join(local_dir, name)):
-                        st.write(f"Downloaded {name}")
+                # host.chdir(remote_dir)
+                list_dir = host.listdir(host.curdir)
+                is_file_downloaded = False
+                for name in list_dir:
+                    if name.endswith(".jtz"):
+                        if host.download(name, os.path.join(local_dir, name)):
+                            st.write(f"Downloaded {name}")
+                            is_file_downloaded = True
 
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
-
-
-# Function to unzip a file
-def unzip_file(file_path):
-    with zipfile.ZipFile(file_path, 'r') as zip_ref:
-        zip_ref.extractall("unzipped_files")
-
-
-# Function to process data and create graphs
-def process_data(data):
-    df = pd.DataFrame(data, columns=["Time", "Value"])
-    df["Time"] = pd.to_datetime(df["Time"])
-    return df
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+        finally:
+            if is_file_downloaded:
+                st.rerun()
+        time.sleep(600)
 
 
 def main():
-    st.title("NEW EUROPE RECENT DATA")
+    st.title("IMOCA New Europe recent DATA")
 
-    option = st.selectbox("Select a page:", ["Graphs", "Download Links"])
+    option = st.selectbox("Select a page:", ["Recent Graphs", "All Adrena Files"])
+    local_dir = "downloaded_files"
 
-    if option == "Graphs":
+    if option == "Recent Graphs":
         st.header("Graphs Page")
 
         # Create a directory for downloaded files
-        if not os.path.exists("downloaded_files"):
-            os.makedirs("downloaded_files")
+        if not os.path.exists(local_dir):
+            os.makedirs(local_dir)
 
-        # Create a directory for unzipped files
-        if not os.path.exists("unzipped_files"):
-            os.makedirs("unzipped_files")
+        st.write("Data will updates every 30 minutes...")
 
-        st.write("Checking FTP every 10 minutes...")
+        # Process and display the downloaded data
+        files = os.listdir(local_dir)
+        files.sort(reverse=True)
+        file_path = os.path.join(local_dir, files[0])
 
-        while True:
-            download_files()
-            time.sleep(600)  # Sleep for 10 minutes
+        if file_path.endswith(".jtz"):
 
-            # Process and display the downloaded data
-            files = os.listdir("downloaded_files")
-            for file in files:
-                file_path = os.path.join("downloaded_files", file)
+            st.write(f"Processing {file_path}...")
+            track = AdrenaTrack(file_path)
+            df = track.trz_parsing(tasks=0, show_progress=False)
 
-                if file.endswith(".jtz"):
-                    st.write(f"Unzipping {file}...")
-                    unzip_file(file_path)
-                    st.write(f"Processing {file}...")
+            st.line_chart(df, x='utc_datetime', y='tws')
+            st.line_chart(df, x='utc_datetime', y='twa')
+            st.line_chart(df, x='utc_datetime', y='bsp')
+            st.line_chart(df, x='utc_datetime', y='heading_true')
 
-                    # Replace this with your data processing logic
-                    data = [("2023-01-01 00:00:00", 10), ("2023-01-01 00:10:00", 20)]
-
-                    df = process_data(data)
-
-                    st.write("Data in DataFrame:")
-                    st.write(df)
-
-                    st.line_chart(df.set_index("Time"))
-
-    elif option == "Download Links":
+    elif option == "All Adrena Files":
         st.header("Download Links Page")
 
         # Display download links for the files
         st.write("Download the following files:")
         files = os.listdir("downloaded_files")
         for file in files:
-            st.markdown(f"**Download {file}**")
-            st.write(f"[Download {file}](downloaded_files/{file})")
+            download_link = f'<a href="downloaded_files/{file}" download="{file}">Download {file}</a>'
+            st.markdown(download_link, unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
+    # Create a separate thread for downloading files
+    download_thread = threading.Thread(target=download_files)
+    download_thread.daemon = True
+    download_thread.start()
+
+    # Run the Streamlit app
     main()
