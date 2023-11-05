@@ -74,10 +74,14 @@ def main():
 
         # Display download links for the files
         st.write("Download the following files:")
-        files = os.listdir("downloaded_files")
+        files = os.listdir(local_dir)
+        files.sort(reverse=True)
         for file in files:
-            download_link = f'<a href="downloaded_files/{file}" download="{file}">Download {file}</a>'
-            st.markdown(download_link, unsafe_allow_html=True)
+            # download_link = f'<a href="{local_dir}/{file}" download="{file}">Download {file}</a>'
+            # st.markdown(download_link, unsafe_allow_html=True)
+            file_path = os.path.join(local_dir, file)
+            with open(file_path, 'rb') as f:
+               st.download_button(file, f, file_name=file_path)
 
 
 if __name__ == '__main__':
