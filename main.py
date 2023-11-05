@@ -17,10 +17,15 @@ def read_ftp_credentials():
         st.stop()
 
 
-ftp_credentials = read_ftp_credentials()
-ftp_host = ftp_credentials['FTP_HOST']
-ftp_user = ftp_credentials['FTP_USER']
-ftp_pass = ftp_credentials['FTP_PASS']
+# ftp_credentials = read_ftp_credentials()
+
+# ftp_host = ftp_credentials['FTP_HOST']
+# ftp_user = ftp_credentials['FTP_USER']
+# ftp_pass = ftp_credentials['FTP_PASS']
+
+ftp_host = st.secrets['FTP_HOST']
+ftp_user = st.secrets['FTP_USER']
+ftp_pass = st.secrets['FTP_PASS']
 
 
 # Function to connect to the FTP server and download files
