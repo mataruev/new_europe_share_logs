@@ -66,7 +66,7 @@ def main():
                 df = track.trz_parsing(tasks=0, show_progress=False)
 
                 st.line_chart(df, x='utc_datetime', y='tws')
-                st.line_chart(df, x='utc_datetime', y='twa')
+                st.line_chart(df, x='utc_datetime', y='twd')
                 st.line_chart(df, x='utc_datetime', y='bsp')
                 st.line_chart(df, x='utc_datetime', y='heading_true')
             except Exception:
