@@ -39,12 +39,12 @@ def download_files():
 
 
 def main():
-    st.title("IMOCA New Europe recent DATA")
+    st.title("IMOCA New Europe live DATA")
 
-    option = st.selectbox("Select a page:", ["Recent Graphs", "All Adrena Files"])
+    option = st.selectbox("Select a page:", ["Recent data Graphs", "All Adrena Files"])
     local_dir = "downloaded_files"
 
-    if option == "Recent Graphs":
+    if option == "Recent data Graphs":
         st.header("Graphs Page")
 
         # Create a directory for downloaded files
