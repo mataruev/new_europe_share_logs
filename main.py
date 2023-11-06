@@ -61,13 +61,16 @@ def main():
         if file_path.endswith(".jtz"):
 
             st.write(f"Processing {file_path}...")
-            track = AdrenaTrack(file_path)
-            df = track.trz_parsing(tasks=0, show_progress=False)
+            try:
+                track = AdrenaTrack(file_path)
+                df = track.trz_parsing(tasks=0, show_progress=False)
 
-            st.line_chart(df, x='utc_datetime', y='tws')
-            st.line_chart(df, x='utc_datetime', y='twa')
-            st.line_chart(df, x='utc_datetime', y='bsp')
-            st.line_chart(df, x='utc_datetime', y='heading_true')
+                st.line_chart(df, x='utc_datetime', y='tws')
+                st.line_chart(df, x='utc_datetime', y='twa')
+                st.line_chart(df, x='utc_datetime', y='bsp')
+                st.line_chart(df, x='utc_datetime', y='heading_true')
+            except Exception:
+                st.write("Latest data is not correct, please wait for next update")
 
     elif option == "All Adrena Files":
         st.header("Download Links Page")
