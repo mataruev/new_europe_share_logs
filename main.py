@@ -44,7 +44,7 @@ def calculate_twa(row):
     if row['twa'] < 180:
         return row['twa']
     else:
-        return 360 - row['twa']
+        return row['twa']-360
 
 def pars_draw(file_name):
     track = AdrenaTrack(file_name)
