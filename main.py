@@ -17,15 +17,17 @@ ftp_pass = st.secrets['data']['FTP_PASS']
 def download_files():
     while True:
         try:
+            local_dir = "downloaded_files"
             with ftputil.FTPHost(ftp_host, ftp_user, ftp_pass) as host:
                 remote_dir = "/your/remote/directory"
-                local_dir = "downloaded_files"
 
                 # host.chdir(remote_dir)
                 list_dir = host.listdir(host.curdir)
+                downloaded_files_list = [f for f in os.listdir(local_dir) if os.path.isfile(os.path.join(local_dir, f))]
+
                 is_file_downloaded = False
                 for name in list_dir:
-                    if name.endswith(".jtz"):
+                    if name.endswith(".jtz") and (not (name in downloaded_files_list)):
                         if host.download(name, os.path.join(local_dir, name)):
                             st.write(f"Downloaded {name}")
                             is_file_downloaded = True
@@ -35,7 +37,7 @@ def download_files():
         finally:
             if is_file_downloaded:
                 st.rerun()
-        time.sleep(600)
+        time.sleep(30)
 
 
 def main():
@@ -67,6 +69,7 @@ def main():
 
                 st.line_chart(df, x='utc_datetime', y='tws')
                 st.line_chart(df, x='utc_datetime', y='twd')
+                st.line_chart(df, x='utc_datetime', y='twa')
                 st.line_chart(df, x='utc_datetime', y='bsp')
                 st.line_chart(df, x='utc_datetime', y='heading_true')
             except Exception:
