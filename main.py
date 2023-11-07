@@ -40,6 +40,24 @@ def download_files():
         time.sleep(30)
 
 
+def calculate_twa(row):
+    if row['twa'] < 180:
+        return row['twa']
+    else:
+        return 360 - row['twa']
+
+def pars_draw(file_name):
+    track = AdrenaTrack(file_name)
+    df = track.trz_parsing(tasks=0, show_progress=False)
+    df['twa_c'] = df.apply(calculate_twa, axis=1)
+
+    st.line_chart(df, x='utc_datetime', y='tws')
+    st.line_chart(df, x='utc_datetime', y='twd')
+    st.line_chart(df, x='utc_datetime', y='twa_c')
+    st.line_chart(df, x='utc_datetime', y='bsp')
+    st.line_chart(df, x='utc_datetime', y='heading_true')
+
+
 def main():
     st.title("IMOCA New Europe live DATA")
 
@@ -60,18 +78,17 @@ def main():
         files.sort(reverse=True)
         file_path = os.path.join(local_dir, files[0])
 
-        if file_path.endswith(".jtz"):
 
+
+        try:
             st.write(f"Processing {file_path}...")
-            try:
-                track = AdrenaTrack(file_path)
-                df = track.trz_parsing(tasks=0, show_progress=False)
+            pars_draw(file_path)
 
-                st.line_chart(df, x='utc_datetime', y='tws')
-                st.line_chart(df, x='utc_datetime', y='twd')
-                st.line_chart(df, x='utc_datetime', y='twa')
-                st.line_chart(df, x='utc_datetime', y='bsp')
-                st.line_chart(df, x='utc_datetime', y='heading_true')
+        except Exception:
+            try:
+                file_path = os.path.join(local_dir, files[1])
+                st.write(f"Processing {file_path}...")
+                pars_draw(file_path)
             except Exception:
                 st.write("Latest data is not correct, please wait for next update")
 
