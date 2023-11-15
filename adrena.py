@@ -283,8 +283,8 @@ def main():
     input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\fastnet_full\NW2"
     out_path = r'C:\Users\matar\OneDrive\Documents\ariel2\KND\2023\2023-07 Fastnet\Logs\NW2'
     input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\Traces 17 Sep 23\NW2_17 sep"
-    input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\Wind sensors 23.10.23\NW1_big vertical sensor"
-    out_path = r'C:\Users\matar\OneDrive\Documents\ariel2\KND\2023\sensors'
+    input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\TJV23\problems_logs"
+    out_path = r'C:\Users\matar\OneDrive\Documents\ariel2\KND\2023\tjv23'
     # out_path = 'C:/Users/matar/OneDrive/Documents/ariel2/KND'
     for filename in os.listdir(input_directory):
         if filename.endswith('.trc') or filename.endswith('.trz'):

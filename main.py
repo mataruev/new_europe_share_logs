@@ -1,12 +1,12 @@
 import threading
 
 import streamlit as st
+import altair as alt
 import ftputil
 import os
 import time
 
 from adrena import AdrenaTrack
-
 
 ftp_host = st.secrets['data']['FTP_HOST']
 ftp_user = st.secrets['data']['FTP_USER']
@@ -44,18 +44,50 @@ def calculate_twa(row):
     if row['twa'] < 180:
         return row['twa']
     else:
-        return row['twa']-360
+        return row['twa'] - 360
+
+
+def draw_chart(df_or, var_list):
+    df = df_or.copy()
+    df['utc_datetime'] = df['utc_datetime'].dt.tz_localize('UTC')
+
+    chart = alt.Chart(df.melt(id_vars='utc_datetime', var_name='variable', value_name='value')).mark_line().encode(
+        x=alt.X('utc_datetime:T', axis=alt.Axis(format='%Y-%m-%d %H:%M:%S', title='Your local Time')),
+        y=alt.Y('value:Q', title='Value'),
+        color='variable:N',
+        tooltip=['utc_datetime:T', 'value:Q', 'variable:N']
+    ).transform_filter(
+        alt.FieldOneOfPredicate(field='variable', oneOf=var_list)
+    ).properties(
+        # title=f'Chart for {" ".join(var_list)}',
+        width=600,
+        height=400
+    )
+
+    # Manually set y-axis domain based on the minimum and maximum values of both variables
+    y_min = df[var_list].min().min()
+    y_max = df[var_list].max().max()
+    chart = chart.encode(alt.Y(f'value:Q', scale=alt.Scale(domain=(y_min, y_max))))
+    # Move the legend to the bottom
+    chart = chart.configure_legend(orient='bottom')
+    # Display the chart in Streamlit
+    st.altair_chart(chart, use_container_width=True)
+
 
 def pars_draw(file_name):
     track = AdrenaTrack(file_name)
     df = track.trz_parsing(tasks=0, show_progress=False)
     df['twa_c'] = df.apply(calculate_twa, axis=1)
-
-    st.line_chart(df, x='utc_datetime', y='tws')
-    st.line_chart(df, x='utc_datetime', y='twd')
-    st.line_chart(df, x='utc_datetime', y='twa_c')
-    st.line_chart(df, x='utc_datetime', y='bsp')
-    st.line_chart(df, x='utc_datetime', y='heading_true')
+    draw_chart(df, ["heading_true", "cog"])
+    draw_chart(df, ["bsp", "sog"])
+    draw_chart(df, ["tws"])
+    draw_chart(df, ["twa_c"])
+    draw_chart(df, ["twd"])
+    # st.line_chart(df, x='utc_datetime', y='tws')
+    # st.line_chart(df, x='utc_datetime', y='twd')
+    # st.line_chart(df, x='utc_datetime', y='twa_c')
+    # st.line_chart(df, x='utc_datetime', y='bsp')
+    # st.line_chart(df, x='utc_datetime', y='heading_true')
 
 
 def main():
@@ -77,8 +109,6 @@ def main():
         files = os.listdir(local_dir)
         files.sort(reverse=True)
         file_path = os.path.join(local_dir, files[0])
-
-
 
         try:
             st.write(f"Processing {file_path}...")
@@ -104,7 +134,7 @@ def main():
             # st.markdown(download_link, unsafe_allow_html=True)
             file_path = os.path.join(local_dir, file)
             with open(file_path, 'rb') as f:
-               st.download_button(file, f, file_name=file_path)
+                st.download_button(file, f, file_name=file_path)
 
 
 if __name__ == '__main__':
