@@ -83,6 +83,9 @@ def pars_draw(file_name):
     draw_chart(df, ["tws"])
     draw_chart(df, ["twa_c"])
     draw_chart(df, ["twd"])
+    draw_chart(df, ["cur_speed"])
+    draw_chart(df, ["cur_dir"])
+
     # st.line_chart(df, x='utc_datetime', y='tws')
     # st.line_chart(df, x='utc_datetime', y='twd')
     # st.line_chart(df, x='utc_datetime', y='twa_c')

@@ -63,7 +63,8 @@ class AdrenaTrack:
     def __init__(self, inp_file_name: str, out_path: str = ""):
         self.time_format = "%H:%M:%S"
         self.linesep = '\n'
-        self.start_index_xdr_fields = 47
+        self.start_index_xdr_fields = 47  # for version 17
+        self.start_index_xdr_fields = 47  # for version 20
         self.out_path = out_path
         self.inp_file_name: str = inp_file_name
         file_name = os.path.basename(self.inp_file_name)
@@ -99,6 +100,12 @@ class AdrenaTrack:
                                       atm_pressure=38,
                                       air_temp=40, water_temp=42, cur_speed=229, cur_dir=230, tide_height=236,
                                       tide_percent=237)
+        self.static_fields_pos = dict(utc_date=1, utc_time=1, lat=(3, 4), lon=(5, 6), sog=8, cog=10, bsp=12,
+                                      heading_true=14, twd=16,
+                                      awa=18, aws=20, twa=22, tws=24, depth=26, vmg=28, local_date=31, local_time=32,
+                                      atm_pressure=38,
+                                      air_temp=40, water_temp=42, cur_speed=296, cur_dir=297, tide_height=303,
+                                      tide_percent=304)  # for version 20
         self.conversion_map = {
             'utc_date': self.pars_utc_date,
             'utc_time': self.parse_utc_time,
@@ -108,14 +115,14 @@ class AdrenaTrack:
             'local_time': self.parse_local_time,
         }
         self.xdr_fields = dict()
-        if self.inp_file_name.endswith("trz") | self.inp_file_name.endswith("jtz"):
+        if self.inp_file_name.endswith("trz") or self.inp_file_name.endswith("jtz"):
             self.text: str = self.read_track_from_trz()
         elif self.inp_file_name.endswith("trc"):
             self.text: str = self.read_track_from_trc()
         else:
             print("Unknown file type!")
             exit(100)
-        self.xdr_headers()
+        self.read_xdr_headers()
 
     def read_track_from_trz(self) -> str | None:
         try:
@@ -158,7 +165,7 @@ class AdrenaTrack:
     #         count += 1
     #     print(fields)
 
-    def xdr_headers(self, show: bool = False):
+    def read_xdr_headers(self, show: bool = True):
         raw_lines = self.text.split(self.linesep)
         for line in raw_lines:
             if line[0:line.find(',')] == 'VarXdr':
@@ -263,19 +270,19 @@ class AdrenaTrack:
             # VAR consecutive *****************************************
         df = pd.DataFrame(parsed_results)
         df['utc_datetime'] = pd.to_datetime(df['utc_date'].astype(str) + ' ' + df['utc_time'].astype(str))
+
         return df
 
 
 def convert_file(inp_file, out_path):
     track = AdrenaTrack(inp_file, out_path)
     print(f' File {track.inp_file_name} read!')
-    # track.show_all_fields_index(1)
+    track.show_all_fields_index(1)
     print('Parsing data...')
-    df = track.trz_parsing(7, False)
-
+    df = track.trz_parsing(0, False)
+    df['utc_datetime'] = pd.to_datetime(df['utc_date'].astype(str) + ' ' + df['utc_time'].astype(str))
     df.to_csv(track.out_file)
     print(df.info())
-
 
 
 @benchmark
@@ -283,7 +290,8 @@ def main():
     input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\fastnet_full\NW2"
     out_path = r'C:\Users\matar\OneDrive\Documents\ariel2\KND\2023\2023-07 Fastnet\Logs\NW2'
     input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\Traces 17 Sep 23\NW2_17 sep"
-    input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\TJV23\problems_logs"
+    input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\TJV23\test2"
+    # input_directory = r"C:\Users\matar\OneDrive\Documents\ariel2\2023\Wind sensors 23.10.23\NW1_big vertical sensor"
     out_path = r'C:\Users\matar\OneDrive\Documents\ariel2\KND\2023\tjv23'
     # out_path = 'C:/Users/matar/OneDrive/Documents/ariel2/KND'
     for filename in os.listdir(input_directory):
