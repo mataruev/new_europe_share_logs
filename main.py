@@ -109,21 +109,23 @@ def main():
         st.write("Data will updates every 30 minutes...")
 
         # Process and display the downloaded data
-        files = os.listdir(local_dir)
+        all_files = os.listdir(local_dir)
+        # files = [file for file in all_files if file.endswith("jtz")]
+        files = all_files
         files.sort(reverse=True)
         file_path = os.path.join(local_dir, files[0])
-        if file_path.endswith("jtz"):
+
+        try:
+            st.write(f"Processing {file_path}...")
+            pars_draw(file_path)
+
+        except Exception:
             try:
+                file_path = os.path.join(local_dir, files[1])
                 st.write(f"Processing {file_path}...")
                 pars_draw(file_path)
-
             except Exception:
-                try:
-                    file_path = os.path.join(local_dir, files[1])
-                    st.write(f"Processing {file_path}...")
-                    pars_draw(file_path)
-                except Exception:
-                    st.write("Latest data is not correct, please wait for next update")
+                st.write("Latest data is not correct, please wait for next update")
 
     elif option == "All Adrena Files":
         st.header("Download Links Page")
