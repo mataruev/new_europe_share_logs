@@ -112,18 +112,18 @@ def main():
         files = os.listdir(local_dir)
         files.sort(reverse=True)
         file_path = os.path.join(local_dir, files[0])
-
-        try:
-            st.write(f"Processing {file_path}...")
-            pars_draw(file_path)
-
-        except Exception:
+        if file_path.endswith("jtz"):
             try:
-                file_path = os.path.join(local_dir, files[1])
                 st.write(f"Processing {file_path}...")
                 pars_draw(file_path)
+
             except Exception:
-                st.write("Latest data is not correct, please wait for next update")
+                try:
+                    file_path = os.path.join(local_dir, files[1])
+                    st.write(f"Processing {file_path}...")
+                    pars_draw(file_path)
+                except Exception:
+                    st.write("Latest data is not correct, please wait for next update")
 
     elif option == "All Adrena Files":
         st.header("Download Links Page")
